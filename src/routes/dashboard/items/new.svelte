@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { post } from '$lib/fetch';
+	import { get } from 'svelte/store';
+	import { session } from '$app/stores';
 
 	let name = 'Chair';
 	let duration = 60;
@@ -8,11 +10,15 @@
 	let data = null;
 	let err = null;
 
+  let currentUser = get(session)?.userId;
+	console.log("currentUser", currentUser)
+
 	async function onSubmit() {
 		[data, err] = await post('/dashboard/items/new', {
 			name,
 			description: desc,
-			duration
+			duration,
+			ownerId: currentUser
 		});
 
 		if (!err) {

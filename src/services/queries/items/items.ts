@@ -16,6 +16,7 @@ export const getItem = async (id: string) => {
 };
 
 export const getItems = async (ids: string[]) => {
+
 	const commands = ids.map((id) => {
 		return client.hGetAll(itemsKey(id));
 	});

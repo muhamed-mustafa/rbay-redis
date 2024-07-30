@@ -14,6 +14,8 @@
 	export let similarItems: Item[] = [];
 	export let userHasHighBid = false;
 
+	console.log("item",item)
+	
 	let err = '';
 	let amount = '';
 	let loading = false;
