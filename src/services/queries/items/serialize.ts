@@ -1,11 +1,10 @@
 import type { CreateItemAttrs } from '$services/types';
+import { DateTime } from 'luxon';
 
 export const serialize = (attrs: CreateItemAttrs) => {
-	console.log('serialize', attrs);
-
 	return {
 		...attrs,
-		createdAt: attrs.createdAt?.toMillis() || new Date().getSeconds(),
-		endingAt: attrs.endingAt?.toMillis() || new Date().getSeconds()
+		createdAt: attrs.createdAt?.toMillis() || DateTime.now().toMillis(),
+		endingAt: attrs.endingAt?.toMillis() || DateTime.now().toMillis()
 	};
 };

@@ -8,9 +8,6 @@ export const userLikesItem = async (itemId: string, userId: string) => {
 
 export const likedItems = async (userId: string) => {
 	const ids = await client.sMembers(usersLikesKey(userId));
-
-	console.log('ids', ids);
-
 	return getItems(ids);
 };
 
@@ -31,7 +28,6 @@ export const unlikeItem = async (itemId: string, userId: string) => {
 };
 
 export const commonLikedItems = async (userOneId: string, userTwoId: string) => {
-	console.log("userOneId: string, userTwoId: string",userOneId, userTwoId)
 	const ids = await client.sInter([usersLikesKey(userOneId), usersLikesKey(userTwoId)]);
 
 	return getItems(ids);

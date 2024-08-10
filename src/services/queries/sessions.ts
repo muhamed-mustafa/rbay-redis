@@ -14,13 +14,13 @@ export const saveSession = async (session: Session) => {
 	await client.hSet(sessionsKey(session.id), serialize(session));
 };
 
-const deserialize = (id: string, session: { [key: string]: string }) => {
-	return { id, userId: session.userId, username: session.username };
+const serialize = ({ userId, username }: Session) => {
+	return {
+		userId: userId || '',
+		username: username
+	};
 };
 
-const serialize = (session: Session) => {
-	return {
-		userId: session.userId || '',
-		username: session.username
-	};
+const deserialize = (id: string, session: { [key: string]: string }) => {
+	return { id, userId: session.userId, username: session.username };
 };

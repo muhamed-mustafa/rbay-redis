@@ -13,25 +13,29 @@ export const getUserById = async (id: string) => {
 
 export const createUser = async (attrs: CreateUserAttrs) => {
 	const id = genId();
-	console.log('id', id);
 
-	const exists = await client.sIsMember(usernamesUniqueKey(), attrs.username);
+	const usernameIsExists = await client.sIsMember(usernamesUniqueKey(), attrs.username);
 
-	if (exists) throw new Error('Username already exists');
-
-	await client.hSet(usersKey(id), serialize(attrs));
+	if (usernameIsExists) throw new Error('Username already exists');
 
 	await client.sAdd(usernamesUniqueKey(), attrs.username);
+
+	await client.hSet(usersKey(id), serialize(attrs));
 
 	return id;
 };
 
-const serialize = (attrs: CreateUserAttrs) => {
-	return {
-		username: attrs.username,
-		password: attrs.password
-	};
+const serialize = ({ username, password }: CreateUserAttrs) => {
+	return { username, password };
 };
+
+// const deserialize = (id: string, user: { [key: string]: string }) => {
+// 	return {
+// 		id,
+// 		username: user.username,
+// 		password: user.password
+// 	};
+// };
 
 const deserialize = (id: string, user: { [key: string]: string }) => {
 	return {
