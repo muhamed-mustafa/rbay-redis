@@ -37,7 +37,10 @@ export const createItem = async (attrs: CreateItemAttrs) => {
 	await Promise.all([
 		client.hSet(itemsKey(id), serialize(attrs)),
 		client.zAdd(itemsByViewsKey(), { value: id, score: 0 }),
-		client.zAdd(itemsByEndingAtKey(), { value: id, score: attrs.endingAt.toMillis() })
+		client.zAdd(itemsByEndingAtKey(), {
+			value: id,
+			score: attrs.endingAt?.toMillis()
+		})
 	]);
 
 	return id;

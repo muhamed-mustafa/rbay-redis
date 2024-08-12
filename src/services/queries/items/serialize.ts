@@ -4,7 +4,7 @@ import { DateTime } from 'luxon';
 export const serialize = (attrs: CreateItemAttrs) => {
 	return {
 		...attrs,
-		createdAt: attrs.createdAt?.toMillis() || DateTime.now().toMillis(),
-		endingAt: attrs.endingAt?.toMillis() || DateTime.now().toMillis()
+		createdAt: attrs.createdAt?.toMillis() || DateTime.now()?.toMillis(),
+		endingAt: attrs.endingAt?.toMillis() || DateTime.now()?.toMillis()
 	};
 };
