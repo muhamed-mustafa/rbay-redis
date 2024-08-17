@@ -1,9 +1,13 @@
 import { client } from '$services/redis';
-import { itemsKey, itemsByViewsKey } from '$services/keys';
+import { itemsKey, itemsByViewsKey, itemsViewsKey } from '$services/keys';
 
 export const incrementView = async (itemId: string, userId: string) => {
-	await Promise.all([
-		client.hIncrBy(itemsKey(itemId), 'views', 1),
-		client.zIncrBy(itemsByViewsKey(), 1, itemId)
-	]);
+	const inserted = await client.pfAdd(itemsViewsKey(itemId), userId);
+
+	if (inserted) {
+		await Promise.all([
+			client.hIncrBy(itemsKey(itemId), 'views', 1),
+			client.zIncrBy(itemsByViewsKey(), 1, itemId)
+		]);
+	}
 };
