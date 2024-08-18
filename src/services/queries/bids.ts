@@ -1,28 +1,38 @@
 import type { CreateBidAttrs, Bid } from '$services/types';
 import { DateTime } from 'luxon';
-import { bidHistoryKey, itemsKey } from '$services/keys';
+import { bidHistoryKey, itemsKey, itemsByPriceKey } from '$services/keys';
 import { client } from '$services/redis';
 import { getItem } from './items';
 
 export const createBid = async (attrs: CreateBidAttrs) => {
-	const item = await getItem(attrs.itemId);
+	return client.executeIsolated(async (isolatedClient) => {
+		await isolatedClient.watch(itemsKey(attrs.itemId));
 
-	if (!item) throw new Error('Item not found');
+		const item = await getItem(attrs.itemId);
 
-	if (item.price > attrs.amount) throw new Error('Bid amount too low');
+		if (!item) throw new Error('Item not found');
 
-	if (item.endingAt.diff(DateTime.now()).toMillis() < 0)
-		throw new Error('Item has ended to bid on');
+		if (item.price > attrs.amount) throw new Error('Bid amount too low');
 
-	const serialized = serializeHistory(attrs.amount, attrs.createdAt.toMillis());
-	return await Promise.all([
-		client.rPush(bidHistoryKey(attrs.itemId), serialized),
-		client.hSet(itemsKey(attrs.itemId), {
-			bids: item.bids + 1,
-			price: attrs.amount,
-			highestBidUserId: attrs.userId
-		})
-	]);
+		if (item.endingAt.diff(DateTime.now()).toMillis() < 0)
+			throw new Error('Item has ended to bid on');
+
+		const serialized = serializeHistory(attrs.amount, attrs.createdAt.toMillis());
+
+		return isolatedClient
+			.multi()
+			.rPush(bidHistoryKey(attrs.itemId), serialized)
+			.hSet(itemsKey(attrs.itemId), {
+				bids: item.bids + 1,
+				price: attrs.amount,
+				highestBidUserId: attrs.userId
+			})
+			.zAdd(itemsByPriceKey(), {
+				value: attrs.itemId,
+				score: attrs.amount
+			})
+			.exec();
+	});
 };
 
 export const getBidHistory = async (itemId: string, offset = 0, count = 10): Promise<Bid[]> => {
