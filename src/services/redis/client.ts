@@ -1,5 +1,5 @@
 import { createClient, defineScript } from 'redis';
-import { itemsByViewsKey, itemsKey, itemsViewsKey } from '$services/keys';
+import { itemsKey, itemsByViewsKey, itemsViewsKey } from '$services/keys';
 
 const client = createClient({
 	socket: {
@@ -8,11 +8,25 @@ const client = createClient({
 	},
 	password: process.env.REDIS_PW,
 	scripts: {
+		unlock: defineScript({
+			NUMBER_OF_KEYS: 1,
+			transformArguments(key: string, token: string) {
+				return [key, token];
+			},
+			transformReply(reply: any) {
+				return reply;
+			},
+			SCRIPT: `
+				if redis.call('GET', KEYS[1]) == ARGV[1] then
+					return redis.call('DEL', KEYS[1])
+				end
+			`
+		}),
 		addOneAndStore: defineScript({
 			NUMBER_OF_KEYS: 1,
 			SCRIPT: `
-			return redis.call('SET', KEYS[1], 1 + tonumber(ARGV[1]))
-		`,
+				return redis.call('SET', KEYS[1], 1 + tonumber(ARGV[1]))
+			`,
 			transformArguments(key: string, value: number) {
 				return [key, value.toString()];
 			},
@@ -20,7 +34,6 @@ const client = createClient({
 				return reply;
 			}
 		}),
-
 		incrementView: defineScript({
 			NUMBER_OF_KEYS: 3,
 			SCRIPT: `
@@ -45,12 +58,6 @@ const client = createClient({
 	}
 });
 
-client.on('connect', async () => {
-	console.log('Connected to Redis');
-	await client.addOneAndStore('books:count', 5);
-	const results = await client.get('books:count');
-	console.log('results', results);
-});
 client.on('error', (err) => console.error(err));
 client.connect();
 
